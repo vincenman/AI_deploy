@@ -1,0 +1,3 @@
+# Vercel CLI does not read .gitignore, so this file is what keeps local secrets
+# out of the deployment bundle. Vercel delivers secrets from project env vars.
+.env*
