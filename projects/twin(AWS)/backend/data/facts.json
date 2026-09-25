@@ -1,0 +1,21 @@
+{
+  "full_name": "Man Wing Fai",
+  "name": "Vincent Man",
+  "current_role": "Analyst Programmer",
+  "location": "Hong Kong",
+  "email": "vincentman1027@yahoo.com.hk",
+  "linkedin": "https://www.linkedin.com/in/vincent-man-b73841167/",
+  "specialties": [
+    "Java",
+    "AI",
+    "Database"
+  ],
+  "years_experience": 10,
+  "education": [
+    {
+      "degree": "MASTER",
+      "institution": "The Polytechnic  University of Hong Kong",
+      "year": "2009"
+    }
+  ]
+}
