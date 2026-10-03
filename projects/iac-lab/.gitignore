@@ -1,0 +1,13 @@
+# Terraform state and cache — never commit these
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfstate.d/
+
+# Lambda build output (rebuilt by lambda/build.py)
+lambda/lambda-deployment.zip
+
+# IDE / OS
+.vscode/
+.DS_Store
