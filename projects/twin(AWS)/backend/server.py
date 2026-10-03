@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
@@ -11,6 +11,7 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 from context import prompt
+from usage import check_limits
 
 # Load environment variables
 load_dotenv()
@@ -38,6 +39,14 @@ MEMORY_DIR = os.getenv("MEMORY_DIR", "../memory")
 # Initialize S3 client if needed
 if USE_S3:
     s3_client = boto3.client("s3")
+
+
+def get_client_ip(request: Request) -> str:
+    """Visitor identity for quota purposes: their IP as seen by API Gateway."""
+    if request.client and request.client.host:
+        return request.client.host
+    event = request.scope.get("aws.event") or {}
+    return (event.get("requestContext", {}).get("http", {}) or {}).get("sourceIp", "unknown")
 
 
 # Request/Response models
@@ -113,7 +122,10 @@ async def health_check():
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, http_request: Request):
+    # Enforce demo quotas before doing any paid work
+    check_limits(get_client_ip(http_request))
+
     try:
         # Generate session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
