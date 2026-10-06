@@ -1,17 +1,37 @@
+import ssl
 import tempfile  # to create a file on disk for semgrep_scan
 import os
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 from typing import List
 from dotenv import load_dotenv
-from agents import Agent, Runner, trace
+from agents import Agent, Runner, set_default_openai_client, set_tracing_disabled, trace
 
 from context import SECURITY_RESEARCHER_INSTRUCTIONS, get_analysis_prompt, enhance_summary
 from mcp_servers import create_semgrep_server
 
 load_dotenv(override=True)
+
+# Trust the OS certificate store rather than certifi's bundle. Behind a
+# TLS-inspecting proxy the interception CA is installed in the OS store, but
+# httpx defaults to create_default_context(cafile=certifi.where()), which
+# suppresses load_default_certs(). Building the context without a cafile picks
+# up the OS store. Certificate verification is still enforced.
+_ssl_context = ssl.create_default_context()
+
+# No explicit timeout here: with httpx's default timeout the OpenAI SDK keeps its
+# own 600s default, which long agent runs need.
+set_default_openai_client(
+    AsyncOpenAI(http_client=httpx.AsyncClient(verify=_ssl_context))
+)
+
+# The tracing exporter posts to a hardcoded api.openai.com endpoint that is
+# unreachable from this network, so disable it instead of logging failures.
+set_tracing_disabled(True)
 
 app = FastAPI(title="Cybersecurity Analyzer API")
 
