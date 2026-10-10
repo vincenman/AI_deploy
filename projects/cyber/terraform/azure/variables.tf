@@ -23,6 +23,12 @@ variable "openai_api_key" {
   default     = ""
 }
 
+variable "openai_base_url" {
+  description = "Base URL for the OpenAI-compatible API endpoint (override when using a proxy or relay)"
+  type        = string
+  default     = "https://api.openai.com/v1"
+}
+
 variable "semgrep_app_token" {
   description = "Semgrep app token for security scanning"
   type        = string

@@ -28,6 +28,10 @@ terraform version
 
 Terraform will read your API keys from environment variables. We'll load them from your `.env` file:
 
+> ⚠️ **Two easy ways to silently break this step:**
+> 1. Run it **from the folder that contains `.env`** (in this repo, the repository root — one level above `cyber/`) and in the **same terminal session** you will run `terraform apply` in. Environment variables are per-terminal; a new window starts with them unset.
+> 2. The Terraform variables for the keys default to empty strings, so an apply with nothing loaded still "succeeds" and deploys a container that answers every analysis with HTTP 500. The verify commands below are the check — each one must print the first characters of the value, not just `...`.
+
 ### Mac/Linux:
 ```bash
 # Load environment variables from .env file
@@ -36,6 +40,7 @@ export $(cat .env | xargs)
 # Verify they're loaded
 echo "OpenAI key loaded: ${OPENAI_API_KEY:0:8}..."
 echo "Semgrep token loaded: ${SEMGREP_APP_TOKEN:0:8}..."
+echo "Base URL loaded: $OPENAI_BASE_URL"
 ```
 
 ### Windows (PowerShell):
@@ -49,6 +54,7 @@ Get-Content .env | ForEach-Object {
 # Verify they're loaded
 Write-Host "OpenAI key loaded: $($env:OPENAI_API_KEY.Substring(0,8))..."
 Write-Host "Semgrep token loaded: $($env:SEMGREP_APP_TOKEN.Substring(0,8))..."
+Write-Host "Base URL loaded: $env:OPENAI_BASE_URL"
 ```
 
 ---
@@ -123,7 +129,18 @@ Now let's deploy everything with a single command:
 # Plan the deployment (see what will be created)
 terraform plan \
   -var="openai_api_key=$OPENAI_API_KEY" \
-  -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
+  -var="semgrep_app_token=$SEMGREP_APP_TOKEN" \
+  -var="openai_base_url=$OPENAI_BASE_URL"
+```
+
+> 💡 `openai_base_url` only needs to be passed if your `.env` defines `OPENAI_BASE_URL` (i.e. you reach OpenAI through a relay/proxy). If you call OpenAI directly, leave that last line off and Terraform uses `https://api.openai.com/v1`. Passing it when your endpoint is not the official one matters: otherwise the container tries to reach `api.openai.com` and every analysis fails even though the key is set.
+
+On PC in Powershell:
+```bash
+terraform plan `
+  -var="openai_api_key=$env:OPENAI_API_KEY" `
+  -var="semgrep_app_token=$env:SEMGREP_APP_TOKEN" `
+  -var="openai_base_url=$env:OPENAI_BASE_URL"
 ```
 
 Review the plan output. You should see:
@@ -141,13 +158,14 @@ Om a Mac / Linux:
 # Deploy everything
 terraform apply \
   -var="openai_api_key=$OPENAI_API_KEY" \
-  -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
+  -var="semgrep_app_token=$SEMGREP_APP_TOKEN" \
+  -var="openai_base_url=$OPENAI_BASE_URL"
 ```
 
 On PC in Powershell:
 
 ```powershell
-terraform apply -var ("openai_api_key=" + $Env:OPENAI_API_KEY) -var ("semgrep_app_token=" + $Env:SEMGREP_APP_TOKEN)
+terraform apply -var ("openai_api_key=" + $Env:OPENAI_API_KEY) -var ("semgrep_app_token=" + $Env:SEMGREP_APP_TOKEN) -var ("openai_base_url=" + $Env:OPENAI_BASE_URL)
 ```
 
 Type `yes` when prompted. This will take 5-10 minutes as it:
@@ -193,6 +211,16 @@ You should see something like:
 1. Open the URL from Step 5 in your browser
 2. You should see the Cybersecurity Analyzer interface
 3. Try uploading a Python file to verify it works end-to-end
+
+You can also verify from the terminal (analysis takes ~20-30s, longer on the first request while the container scales up):
+
+```bash
+curl -s -X POST https://<your-app-url>/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"code": "import subprocess\nsubprocess.call(\"ls\", shell=True)\n"}'
+```
+
+A working deployment returns a JSON report with `summary` and `issues`. If you instead see `{"detail":"OpenAI API key not configured"}`, Step 1 did not load your `.env` — re-run it in this same terminal and `terraform apply` again.
 
 ### Check Azure Resources
 In the Azure Portal (https://portal.azure.com):
@@ -344,6 +372,7 @@ After making code changes:
 terraform apply \
   -var="openai_api_key=$OPENAI_API_KEY" \
   -var="semgrep_app_token=$SEMGREP_APP_TOKEN" \
+  -var="openai_base_url=$OPENAI_BASE_URL" \
   -var="docker_image_tag=v2"
 ```
 
@@ -401,6 +430,12 @@ terraform workspace select azure
 - Check the URL from `terraform output app_url`
 - Wait 2-3 minutes after deployment completes
 - Check logs: `az containerapp logs show --name cyber-analyzer --resource-group cyber-analyzer-rg`
+
+### Every analysis returns HTTP 500 ("OpenAI API key not configured")
+Terraform deployed with empty key values because `.env` was not loaded in the terminal that ran `apply` (see the warning in Step 1). Load `.env` there and re-run `terraform apply` with the `-var` flags from Step 4 — the container app picks the values up in a new revision. Check the response body (`{"detail": "..."}`) whenever you see a 500: it names the actual cause. An `Uncaught (in promise) ... Could not establish connection` message in the browser console alongside it comes from a browser extension, not this app.
+
+### Semgrep reports it could not complete / found 0 issues
+The first analysis after a cold start can hit a short timeout while Semgrep downloads its rule registry, and then falls back to the model's own analysis. Re-run the analysis; if it persists, check the container logs (`az containerapp logs show ... --revision <name>`).
 
 ---
 

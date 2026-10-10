@@ -129,6 +129,11 @@ resource "azurerm_container_app" "main" {
       }
 
       env {
+        name  = "OPENAI_BASE_URL"
+        value = var.openai_base_url
+      }
+
+      env {
         name  = "SEMGREP_APP_TOKEN"
         value = var.semgrep_app_token
       }

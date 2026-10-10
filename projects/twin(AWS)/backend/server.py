@@ -28,8 +28,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize OpenAI client.
+# API Gateway caps integrations at 30s: keep each attempt short and retry, so one
+# slow upstream response is abandoned instead of consuming the whole budget.
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    timeout=float(os.getenv("LLM_TIMEOUT", "8")),
+    max_retries=int(os.getenv("LLM_MAX_RETRIES", "3")),
+)
 
 # Memory storage configuration
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
