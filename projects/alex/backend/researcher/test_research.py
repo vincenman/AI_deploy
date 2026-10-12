@@ -18,14 +18,8 @@ TERRAFORM_DIR = "terraform/4_researcher"
 
 
 def get_repo_root() -> Path:
-    return Path(
-        subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.strip()
-    )
+    """Project root (alex/), two levels above this file."""
+    return Path(__file__).resolve().parents[2]
 
 
 def get_service_url():
@@ -77,7 +71,7 @@ def test_research(topic=None):
 
     # Call research endpoint
     print(f"\n🔬 Generating research for: {display_topic}")
-    print("   This will take 20-30 seconds as the agent researches and analyzes...")
+    print("   This can take 2-4 minutes as the agent browses and analyzes...")
 
     try:
         research_url = f"{service_url}/research"
@@ -86,7 +80,10 @@ def test_research(topic=None):
         response = requests.post(
             research_url,
             json=payload,
-            timeout=180  # Give it 3 minutes for research
+            # The Lambda's own timeout is 600s. Wait a little longer than that so we
+            # always see the real outcome (result, 500 error, or 502 timeout) instead
+            # of a client-side timeout hiding it.
+            timeout=630,
         )
         response.raise_for_status()
 

@@ -53,9 +53,8 @@ def terraform_output(terraform_dir: Path, output_name: str) -> str:
 
 
 def get_repo_root() -> Path:
-    return Path(
-        run_command(["git", "rev-parse", "--show-toplevel"], capture_output=True)
-    )
+    """Project root (alex/), two levels above this file."""
+    return Path(__file__).resolve().parents[2]
 
 
 def write_image_override(terraform_dir: Path, image_uri: str):

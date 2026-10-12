@@ -121,8 +121,12 @@ resource "aws_lambda_function" "researcher" {
   package_type  = "Image"
   image_uri     = var.researcher_image_uri
   role          = aws_iam_role.researcher_lambda_role.arn
-  timeout       = 300
-  memory_size   = 2048
+  # A web-research run (headless Chromium browsing ad-heavy finance pages) commonly
+  # takes 3-5 minutes; the old 300s limit killed runs mid-browse and returned 502.
+  # Memory raised for the same reason: a 185s run already peaked at 1.6 GB of 2 GB.
+  # 3008 MB is the AWS default per-function ceiling (higher needs a quota increase).
+  timeout       = 600
+  memory_size   = 3008
   architectures = ["x86_64"]
 
   ephemeral_storage {
