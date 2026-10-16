@@ -18,7 +18,12 @@ def run_command(cmd, cwd=None, check=True, capture_output=False):
     print(f"Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
 
     if capture_output:
-        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, shell=isinstance(cmd, str))
+        # Decode child output as UTF-8; Windows pipes default to the system codepage (e.g. cp950)
+        result = subprocess.run(
+            cmd, cwd=cwd, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+            shell=isinstance(cmd, str)
+        )
         if check and result.returncode != 0:
             print(f"Error: {result.stderr}")
             return None

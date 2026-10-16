@@ -27,7 +27,13 @@ def run_command(cmd, cwd=None, check=True, capture_output=False, env=None):
     print(f"Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
 
     if capture_output:
-        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, shell=isinstance(cmd, str), env=env)
+        # Decode child output as UTF-8; the Windows codepage (e.g. cp950) cannot
+        # decode characters like the ✅ in terraform's setup_instructions output
+        result = subprocess.run(
+            cmd, cwd=cwd, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+            shell=isinstance(cmd, str), env=env
+        )
         if check and result.returncode != 0:
             print(f"Error: {result.stderr}")
             sys.exit(1)

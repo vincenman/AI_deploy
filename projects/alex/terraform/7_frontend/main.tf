@@ -198,7 +198,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../backend/api/api_lambda.zip")
   runtime          = "python3.12"
   architectures    = ["x86_64"]
-  timeout          = 30
+  timeout          = 60
   memory_size      = 512
   tags             = local.common_tags
 

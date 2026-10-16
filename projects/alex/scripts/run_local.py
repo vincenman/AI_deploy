@@ -105,14 +105,19 @@ def start_backend():
         print("  Installing backend dependencies...")
         subprocess.run(["uv", "sync"], cwd=backend_dir, check=True)
 
-    # Start the backend
+    # Start the backend - decode as UTF-8 explicitly, since Windows pipes
+    # default to the system codepage (e.g. cp950) and crash on UTF-8 output
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     proc = subprocess.Popen(
         ["uv", "run", "main.py"],
         cwd=backend_dir,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        bufsize=1
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+        env=env
     )
     processes.append(proc)
 
@@ -143,13 +148,16 @@ def start_frontend():
         print("  Installing frontend dependencies...")
         subprocess.run(["npm", "install"], cwd=frontend_dir, check=True, shell=IS_WINDOWS)
 
-    # Start the frontend
+    # Start the frontend - decode as UTF-8 explicitly, since npm/Next.js always
+    # emit UTF-8 (e.g. the ▲ banner) while Windows pipes default to cp950
     proc = subprocess.Popen(
         ["npm", "run", "dev"],
         cwd=frontend_dir,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # Combine stderr with stdout
         text=True,
+        encoding="utf-8",
+        errors="replace",
         bufsize=1,
         shell=IS_WINDOWS
     )
