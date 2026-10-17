@@ -18,6 +18,53 @@ try:
 except ImportError:
     pass
 
+
+
+
+from datetime import datetime, timezone
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+async def run_orchestrator(job_id: str) -> None:
+    start_time = datetime.now(timezone.utc)
+
+    # Fetch the job once so we can log who triggered the run
+    job = db.jobs.find_by_id(job_id)
+    if not job:
+        logger.error(f"Planner: Job {job_id} not found.")
+        return
+    user_id = job["clerk_user_id"]
+
+    logger.info(json.dumps({
+        "event": "PLANNER_STARTED",
+        "job_id": job_id,
+        "user_id": user_id,
+        "timestamp": start_time.isoformat(),
+    }))
+
+    # ... perform tagging, price refresh, and build planner task ...
+
+    for agent_name in ["reporter", "charter", "retirement"]:
+        logger.info(json.dumps({
+            "event": "AGENT_INVOKED",
+            "agent": agent_name,
+            "job_id": job_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }))
+
+    # ... run the planner agent with Runner.run(...) ...
+
+    end_time = datetime.now(timezone.utc)
+    logger.info(json.dumps({
+        "event": "PLANNER_COMPLETED",
+        "job_id": job_id,
+        "duration_seconds": (end_time - start_time).total_seconds(),
+        "status": "success",
+        "timestamp": end_time.isoformat(),
+    }))
+
+
 # Import database package
 from src import Database
 

@@ -205,8 +205,8 @@ resource "aws_s3_object" "lambda_packages" {
   
   bucket = aws_s3_bucket.lambda_packages.id
   key    = "${each.key}/${each.key}_lambda.zip"
-  source = "${path.module}/../../backend/${each.key}/${each.key}_lambda.zip"
-  etag   = fileexists("${path.module}/../../backend/${each.key}/${each.key}_lambda.zip") ? filemd5("${path.module}/../../backend/${each.key}/${each.key}_lambda.zip") : null
+  source      = "${path.module}/../../backend/${each.key}/${each.key}_lambda.zip"
+  source_hash = fileexists("${path.module}/../../backend/${each.key}/${each.key}_lambda.zip") ? filebase64sha256("${path.module}/../../backend/${each.key}/${each.key}_lambda.zip") : null
   
   tags = {
     Project = "alex"

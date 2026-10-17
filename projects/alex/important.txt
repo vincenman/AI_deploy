@@ -1,0 +1,183 @@
+AI Production (ML Ops)
+https://www.udemy.com/certificate/UC-1c1a3912-5ec3-4141-9c72-6c08e1a3fce5/
+
+AI Engineer Core Track
+https://www.udemy.com/certificate/UC-d0c63b73-f4d1-4665-b107-b5c4397e53a2/
+
+AI Enginer Agentic Track
+https://www.udemy.com/certificate/UC-300e8682-b16a-4bba-9b0e-13a30ba55fdf/
+
+AI Coder: (Dont need)?
+https://www.udemy.com/certificate/UC-68d1c155-7821-40c1-9a76-edca3b8f72e5/
+
+AI Builder
+https://www.udemy.com/certificate/UC-cc38fe1f-f395-4c3f-b794-e4ea208d8ae2/
+
+AI Leader
+https://www.udemy.com/certificate/UC-276ed37b-27b1-408f-8956-bc7ed0b4b4fb/
+
+
+
+
+My Digital Twin
+https://d2x406ty7t8qp3.cloudfront.net/
+
+
+LinkIn
+https://www.linkedin.com/in/vincent-man-b73841167/
+
+LinkIn Post
+https://lnkd.in/p/gEmg7KeX
+
+
+
+
+🚀 Just completed the AI Engineer Production Track: Deploy LLMs & Agents at Scale by Ed Donner — an intensive 4-week journey that transformed how I build and ship production-grade AI systems!
+
+🔗 Course materials: https://github.com/ed-donner/production
+
+Across these four weeks, I built and deployed multiple real-world projects, including:
+
+✅ Health Consultation Application (SaaS with Clerk) on Local
+
+✅ Health Consultation Application on Vercel
+
+✅ Health Consultation Application on AWS
+
+✅ Digital Twin 
+
+✅ Digital Twin (CI/CD) with gitactions.
+
+
+CD with githubs action)
+
+✅ Digital Twin on AWS
+
+✅ Cyber Checking system on AWS
+
+✅ ALEX – The Financial Planner (Enterprise-grade Capstone) on AWS
+-- ALEX is capstone Project with AI agent orchestration, including tools used , Momery etc
+
+Through hands-on practice, I significantly leveled up my skills in:
+
+🛠️ Infrastructure as Code with Terraform across AWS, GCP, and Azure/
+
+☁️ Key cloud services – IAM (With User group , user creation (aiengineer), permissions, policy etc), Bill Management(Most important!!!) , 
+CloudFront,Amazon S3, S3 vector, Amazon API Gateway,  Amazon Bedrock (🚗 us.amazon.nova-pro-v1:0)  Aurora RDS V2, CloudWatch, Docker,Amazon ECR ,  Lambda (and equivalent services on other clouds), SQS Queue
+
+☁️ Key cloud services for knowledge base: Amazon Scheduler,Segamaker (We deploy Hugging face model: entence-transformers/all-MiniLM-L6-v2)
+
+
+*The most expensive one is  Aurora RDS V2, but you could set min capacity close to 0, the budget could close to zero.
+(As I would like to keep my projects for as long as I can afford the budget🤣)
+
+
+There are various Cloud Deployment Archetypes "
+EC2 -- Traditonal cloud Servers - Iaas
+Vercel/Beanstalk -- Paas
+App Runner -- Caas
+ECS/EKS -- Container Orchestration
+Lambda  -- Serverless Functions -- Faas
+
+🔄 CI/CD, serverless architectures, and production deployment patterns
+
+Most valuably, I internalized the core principles of building true Enterprise Applications that are:
+
+🔹 Scalable
+
+🔹 Secure
+
+🔹 Monitored
+
+🔹 Guarded
+
+🔹 Explainable
+
+🔹 Observable (Could use: langfuse) rap entire handler with observability context
+
+Ed Donner’s step-by-step guidance, combined with deep conceptual explanations, made it possible to take the ALEX capstone all the way to enterprise grade. 
+Along the way, I fine-tuned and customized the code to better suit my own use cases — 
+and I’ve created my own GitHub repository (https://github.com/vincenman/AI_deploy)🍕 so I can continue iterating and improving these projects.
+
+This course didn’t just teach tools — it shifted my mindset from “building prototypes” to “shipping production-ready AI systems across multiple clouds.” Excited to keep applying these skills! 💡
+
+#AIEngineering #AWS #GCP #Azure #Terraform #MLOps #CloudComputing #LLM #AgenticAI #CareerGrowth
+
+
+✅ finale Project (Suing AgentCore) "It's like a Week, in a Minute!!🤣🤣
+
+About Capstone Project
+=======================
+
+Knowledge base
+Manual invoke (no schedule deployed)
+   → Lambda alex-researcher (container image, ECR alex-researcher:deploy-1791810675)
+       model: bedrock/converse/openai.gpt-oss-120b-1:0  (us-west-2)
+       tools: web browsing via Playwright MCP
+   → POST https://b77zk9klea.execute-api.us-east-2.amazonaws.com/prod/ingest
+       (API key auth)
+   → Lambda alex-ingest
+   → SageMaker Serverless embedding endpoint (all-MiniLM-L6-v2, 384-dim)
+   → S3 Vectors bucket alex-vectors-304896042944, index financial-research
+   → later queried by the Reporter's get_market_insights tool
+   
+   
+How research use the knowledge base
+Public Lambda Function URL
+  https://wcxdfv6cqxj3vtcx62mojcoceq0ssgiq.lambda-url.us-east-2.on.aws/
+  POST /research  {"topic": "..."}   (or GET /research/auto)
+        │  Lambda Web Adapter → uvicorn → FastAPI (backend/researcher/server.py)
+        ▼
+Researcher agent: Bedrock OSS 120B + Playwright MCP browser tools
+        │  instructions: "SAVE TO DATABASE: Use ingest_financial_document immediately"
+        ▼
+ingest_financial_document(topic, analysis)      backend/researcher/tools.py:38-75
+        │  POST https://b77zk9klea.execute-api.us-east-2.amazonaws.com/prod/ingest
+        │  header: x-api-key
+        ▼
+alex-ingest Lambda                              backend/ingest/ingest_s3vectors.py:39-96
+        ├── SageMaker alex-embedding-endpoint  → 384-dim vector
+        └── s3vectors.put_vectors(
+                bucket = "alex-vectors-304896042944",
+                index  = "financial-research",
+                key    = str(uuid.uuid4()),          # new key every time
+                metadata = { text, timestamp, topic }
+            )
+   
+How to add data in knowledge base
+1) 
+URL="https://wcxdfv6cqxj3vtcx62mojcoceq0ssgiq.lambda-url.us-east-2.on.aws"
+
+# Specific topic
+curl -sS --max-time 630 -X POST "$URL/research" \
+  -H "Content-Type: application/json" \
+  -d '{"topic":"US large-cap market outlook and interest rates"}'
+
+# Let the agent choose a trending topic
+curl -sS --max-time 630 -X POST "$URL/research" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Dedicated auto endpoint (GET, used by the scheduler)
+curl -sS --max-time 630 "$URL/research/auto"
+
+2) 
+cd backend/researcher
+
+# Let the agent pick a trending topic
+uv run test_research.py
+
+# Or give it a specific topic
+uv run test_research.py "AAPL earnings and AI strategy outlook"
+
+How to check data in knowledge base
+keys=$(aws s3vectors list-vectors \
+  --vector-bucket-name alex-vectors-304896042944 \
+  --index-name financial-research --max-results 500 \
+  --region us-east-2 --query 'vectors[].key' --output text)
+
+aws s3vectors get-vectors \
+  --vector-bucket-name alex-vectors-304896042944 \
+  --index-name financial-research --keys $keys \
+  --return-metadata --region us-east-2 \
+  --query 'vectors[].metadata.[timestamp,topic]' --output text | sort

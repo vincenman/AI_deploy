@@ -118,8 +118,8 @@ resource "aws_rds_cluster" "aurora" {
   
   # Serverless v2 scaling configuration
   serverlessv2_scaling_configuration {
-    min_capacity = var.min_capacity
-    max_capacity = var.max_capacity
+    min_capacity = 16
+    max_capacity = 0
   }
   
   # Enable Data API

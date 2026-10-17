@@ -254,9 +254,10 @@ resource "aws_apigatewayv2_stage" "default" {
   auto_deploy = true
   tags        = local.common_tags
 
+  # Deliberately low throttle: safety net against spam if the public demo link is shared widely
   default_route_settings {
-    throttling_burst_limit = 100
-    throttling_rate_limit  = 100
+    throttling_burst_limit = 20
+    throttling_rate_limit  = 10
   }
 }
 

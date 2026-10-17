@@ -36,6 +36,38 @@ load_dotenv(override=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+import logging
+import json
+from datetime import datetime
+
+# Configure structured logging
+
+logger.setLevel(logging.INFO)
+
+class StructuredLogger:
+    @staticmethod
+    def log_event(event_type, user_id=None, details=None):
+        log_entry = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "event_type": event_type,
+            "user_id": user_id,
+            "details": details
+        }
+        logger.info(json.dumps(log_entry))
+
+# Add to endpoints
+@app.post("/api/analyze")
+async def trigger_analysis(user=Depends(clerk_guard)):
+    StructuredLogger.log_event(
+        "ANALYSIS_TRIGGERED",
+        user_id=user.clerk_user_id,
+        details={"accounts": user_id}
+    )
+    # ... rest of endpoint
+
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Alex Financial Advisor API",
