@@ -1,0 +1,30 @@
+default_agent: first
+agents:
+  first:
+    name: first
+    entrypoint: first.py
+    platform: linux/arm64
+    container_runtime: docker
+    aws:
+      execution_role: arn:aws:iam::304896042944:role/AmazonBedrockAgentCoreSDKRuntime-us-east-2-a7937b64b8
+      execution_role_auto_create: false
+      account: '304896042944'
+      region: us-east-2
+      ecr_repository: 304896042944.dkr.ecr.us-east-2.amazonaws.com/bedrock-agentcore-first
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: first-AiM7i0CC5n
+      agent_arn: arn:aws:bedrock-agentcore:us-east-2:304896042944:runtime/first-AiM7i0CC5n
+      agent_session_id: 579b8c05-8784-4880-b8ac-d5c50b36b530
+    codebuild:
+      project_name: bedrock-agentcore-first-builder
+      execution_role: arn:aws:iam::304896042944:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-2-a7937b64b8
+      source_bucket: bedrock-agentcore-codebuild-sources-304896042944-us-east-2
+    authorizer_configuration: null
+    oauth_configuration: null
